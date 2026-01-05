@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AtlasGram | Web</title>
+    <style>
+        :root {
+            --tg-blue: #0088cc;
+            --tg-light-blue: #54c3f1;
+            --bg-color: #e7ebf0;
+            --white: #ffffff;
+            --border: #dfe1e5;
+        }
+
+        body, html {
+            margin: 0; padding: 0; height: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            overflow: hidden;
+        }
+
+        /* Центрирование окна */
+        .app-wrapper {
+            display: flex; justify-content: center; align-items: center; height: 100vh;
+        }
+
+        .tg-container {
+            width: 100vw; height: 100vh;
+            max-width: 1000px; max-height: 800px;
+            background: var(--white);
+            display: flex; position: relative;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        }
+
+        /* Авторизация */
+        #auth-overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--white); z-index: 1000;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+        }
+
+        .login-card { text-align: center; max-width: 300px; }
+        .logo { width: 100px; margin-bottom: 20px; border-radius: 22%; }
+
+        /* Интерфейс мессенджера */
+        .sidebar { width: 30%; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .main-chat { flex: 1; display: flex; flex-direction: column; background: #f4f4f5 url('https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png'); }
+
+        .header { padding: 15px; background: var(--tg-blue); color: white; font-weight: bold; }
+        
+        .chat-list { flex: 1; overflow-y: auto; }
+        .chat-item { padding: 15px; display: flex; align-items: center; border-bottom: 1px solid #f9f9f9; cursor: pointer; }
+        .chat-item:hover { background: #f2f6fa; }
+        .avatar { width: 45px; height: 45px; border-radius: 50%; margin-right: 12px; background: #64b5f6; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+
+        #messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; }
+        .msg { padding: 8px 15px; border-radius: 15px; margin-bottom: 8px; max-width: 70%; font-size: 14px; box-shadow: 0 1px 2px rgba(0,0,0,0.1); }
+        .msg.in { background: white; align-self: flex-start; }
+        .msg.out { background: #efffde; align-self: flex-end; }
+
+        .input-area { padding: 15px; background: white; display: flex; border-top: 1px solid var(--border); }
+        input { flex: 1; border: 1px solid #ddd; padding: 10px; border-radius: 5px; outline: none; }
+        .btn-send { margin-left: 10px; color: var(--tg-blue); font-weight: bold; cursor: pointer; line-height: 40px; }
+
+        .hidden { display: none !important; }
+        .demo-btn { margin-top: 20px; color: var(--tg-blue); text-decoration: underline; cursor: pointer; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+
+<div class="app-wrapper">
+    <div class="tg-container">
+        
+        <div id="auth-overlay">
+            <div class="login-card">
+                <img src="https://telegram.org/img/t_logo.png" class="logo" alt="AtlasGram">
+                <h2>AtlasGram</h2>
+                <p style="color: #707579;">Войдите через официальный виджет</p>
+                
+                <div id="widget-container">
+                    <script async src="https://telegram.org/js/telegram-widget.js?22" 
+                            data-telegram-login="Atlasofficial8_bot" 
+                            data-size="large" 
+                            data-onauth="onTelegramAuth(user)" 
+                            data-request-access="write"></script>
+                </div>
+
+                <div id="demo-link" class="demo-btn hidden" onclick="enterApp({first_name: 'Гость'})">
+                    Войти в демо-режим (если виджет не загрузился)
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <div class="header">AtlasGram</div>
+            <div class="chat-list">
+                <div class="chat-item">
+                    <div class="avatar">A</div>
+                    <div><strong>Atlas Bot</strong><br><small>Online</small></div>
+                </div>
+                <div class="chat-item">
+                    <div class="avatar" style="background:#ff9800">И</div>
+                    <div><strong>Избранное</strong><br><small>Ваши заметки</small></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-chat">
+            <div id="messages">
+                <div class="msg in">Добро пожаловать в <b>AtlasGram</b>! Напишите что-нибудь.</div>
+            </div>
+            <div class="input-area">
+                <input type="text" id="msgInput" placeholder="Сообщение...">
+                <div class="btn-send" onclick="sendMessage()">ОТПРАВИТЬ</div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<script>
+    // Показать кнопку демо-входа через 3 сек, если виджет заблокирован браузером
+    setTimeout(() => {
+        document.getElementById('demo-link').classList.remove('hidden');
+    }, 3000);
+
+    function onTelegramAuth(user) {
+        console.log('Авторизация успешна:', user);
+        enterApp(user);
+    }
+
+    function enterApp(user) {
+        document.getElementById('auth-overlay').classList.add('hidden');
+        addMessage(`Система: Вы вошли как ${user.first_name}`, 'in');
+    }
+
+    function sendMessage() {
+        const input = document.getElementById('msgInput');
+        if (!input.value.trim()) return;
+        
+        addMessage(input.value, 'out');
+        
+        // Ответ от бота (имитация)
+        setTimeout(() => {
+            addMessage("Получено в AtlasGram: " + input.value, 'in');
+        }, 1000);
+
+        input.value = '';
+    }
+
+    function addMessage(text, type) {
+        const container = document.getElementById('messages');
+        const div = document.createElement('div');
+        div.className = `msg ${type}`;
+        div.innerText = text;
+        container.appendChild(div);
+        container.scrollTop = container.scrollHeight;
+    }
+
+    // Отправка по Enter
+    document.getElementById('msgInput').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+
+</body>
+</html>
